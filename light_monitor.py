@@ -29,18 +29,31 @@ class LightMonitor(Monitor):
     def activate(self):
         self.read_log_file("grader_files/ambient.log")
         self.lightBehavior = self.executive.behavioral.getBehavior("LightBehavior")
+
+        # self.raiseTempBehavior = self.executive.behavioral.getBehavior("RaiseTempBehavior")
+
         schedule = self.executive.schedule
         self.lighting_intervals = [(start*60, end*60)
                                    for start, end in schedule['LightBehavior']]
+
+        # self.raiseTemp_intervals = [(start*60, end*60)
+        #                            for start, end in schedule['RaiseTempBehavior']]
         self.current_optimal = 900 # Arbitrary value - will be reset once the monitor begins
 
     def perceive(self):
         # BEGIN STUDENT CODE
+        self.mtime = self.sensordata["midnight_time"]
+        self.time = self.sensordata["unix_time"]
+        self.light = self.sensordata["light"]
+        self.insolation += (self.light / 3600) * (self.dt)
+
+        print(self.insolation)
         # END STUDENT CODE
-        pass
+
 
     def monitor(self):
         #print("INSOLATION: %.1f %d" %(self.mtime/3600.0, self.insolation))
+        print(self.insolation)
         if (self.mtime < time_since_midnight(self.last_time)):
             print("INSOLATION TODAY: %.1f" %self.insolation)
             self.reset()
@@ -52,6 +65,24 @@ class LightMonitor(Monitor):
             #  for the LightBehavior based on this calculation
 
             # BEGIN STUDENT CODE
+            light_time_left = self.lighting_time_left(self.mtime)
+            remaining_ambient = self.non_lighting_ambient_insolation(self.mtime, 24*3600)
+
+            total_expected_ambient = self.insolation + remaining_ambient
+
+            insolation_required = self.target - total_expected_ambient
+            # print("require: ", insolation_required)
+            # print("time_left: ", light_time_left)
+
+            if light_time_left > 0:
+                optimal_light_level = (insolation_required *3600)/ light_time_left
+                #should be around 700 to 800
+                self.lightBehavior.set_optimal(optimal_light_level)
+                self.current_optimal = optimal_light_level
+            else:
+                self.reset()
+
+
             # END STUDENT CODE
             pass
 
@@ -102,4 +133,3 @@ class LightMonitor(Monitor):
                 time_left += interval[1] - interval[0]
 
         return time_left
-
