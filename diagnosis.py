@@ -185,28 +185,23 @@ def create_signal_constraints(model, variables):
         add_constraint_to_model(sensor_to_rasppi, model, variables)
 
     #1 constraint = 20
-    #PROBLEM!!!!!!!!!!!!!!!!
-    # wlvl_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
-    #             %(signal('Wlevel', 'Arduino'), connected('Wlevel', 'Arduino'),
-    #             working('Wlevel'), signal('Wlevel', 'Wlevel')))
-    # add_constraint_to_model(wlvl_to_arduino, model, variables)
+    wlvl_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                %(signal('Wlevel', 'Arduino'), connected('Wlevel', 'Arduino'),
+                working('Wlevel'), signal('Wlevel', 'Wlevel')))
+    add_constraint_to_model(wlvl_to_arduino, model, variables)
     
     #6 constraints = 26
-    #PROBLEM!!!!!!!!!!!!!!!!
     for actuator in actuators:
-        actuator_to_pb = ("IFF('%s', AND('%s', AND('%s', AND('%s', '%s'))))"
-                  %(signal(actuator, 'Power-Board'), connected('Power-Board', actuator),
-                    working('Power-Board'), powered('Power-Board'), 
-                    signal(actuator, 'Power-Board')))
         actuator_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
-                  %(signal(actuator, 'Arduino'), connected('Arduino', 'Power-Board'),
-                    working('Power-Board'),
-                    signal(actuator, 'Power-Board')))
-        add_constraint_to_model(actuator_to_pb, model, variables)
+                %(signal(actuator, 'Arduino'), connected('Rasp-Pi', 'Arduino'),
+                working('Rasp-Pi'), signal(actuator, 'Rasp-Pi')))
         add_constraint_to_model(actuator_to_arduino, model, variables)
+
+        actuator_to_pb = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                %(signal(actuator, 'Power-Board'), connected('Arduino', 'Power-Board'),
+                working('Arduino'), signal(actuator, 'Arduino')))
+        add_constraint_to_model(actuator_to_pb, model, variables)
     # END STUDENT CODE
-
-
     pass
 
 def create_sensor_generation_constraints(model, variables):
@@ -232,7 +227,7 @@ def create_expected_result_constraints(model, variables):
         expected_result('LEDs'), powered('LEDs'), working('LEDs'), 
         signal('Light0', 'Rasp-Pi'), signal('Light1', 'Rasp-Pi')), model, variables)
     
-    # Pump (more than two signals, so chain the OR calls)
+    # Pump
     add_constraint_to_model("IFF('%s', AND('%s', AND('%s', OR('%s', OR('%s', '%s')))))" % (
         expected_result('Pump'), powered('Pump'), working('Pump'), 
         signal('Moisture0', 'Rasp-Pi'), signal('Moisture1', 'Rasp-Pi'), signal('Wlevel', 'Rasp-Pi')), model, variables)
