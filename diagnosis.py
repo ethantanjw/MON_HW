@@ -152,39 +152,61 @@ def create_powered_constraints(model, variables):
 
 def create_signal_constraints(model, variables):
     # BEGIN STUDENT CODE
-    signal_flows = [
-        # Sensor signals to Sensor Boards
-        ('H-T0', 'Sensor-Board0', 'Arduino'),
-        ('Light0', 'Sensor-Board0', 'Arduino'),
-        ('Moisture0', 'Sensor-Board0', 'Arduino'),
-        ('H-T1', 'Sensor-Board1', 'Arduino'),
-        ('Light1', 'Sensor-Board1', 'Arduino'),
-        ('Moisture1', 'Sensor-Board1', 'Arduino'),
-        
-        # Arduino to Rasp-Pi for Sensor Signals
-        ('H-T0', 'Arduino', 'Rasp-Pi'),
-        ('Light0', 'Arduino', 'Rasp-Pi'),
-        ('Moisture0', 'Arduino', 'Rasp-Pi'),
-        ('H-T1', 'Arduino', 'Rasp-Pi'),
-        ('Light1', 'Arduino', 'Rasp-Pi'),
-        ('Moisture1', 'Arduino', 'Rasp-Pi'),
+    sensors0 = ['H-T0', 'Light0', 'Moisture0']
+    sensors1 = ['H-T1', 'Light1', 'Moisture1']
 
-        # Actuator signals from Power-Board
-        # ('LEDs', 'Power-Board', 'Rasp-Pi'),
-        # ('Fans', 'Power-Board', 'Rasp-Pi'),
-        # ('Pump', 'Power-Board', 'Rasp-Pi')
-    ]
+    #6 constraints
+    for sensor in sensors0:
+        sensor_to_sb0 = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                  %(signal(sensor, 'Sensor-Board0'), connected(sensor, 'Sensor-Board0'),
+                    working(sensor), signal(sensor, sensor)))
+        sensor_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                  %(signal(sensor, 'Arduino'), connected('Sensor-Board0', 'Arduino'),
+                    working('Sensor-Board0'), signal(sensor, 'Sensor-Board0')))
+        add_constraint_to_model(sensor_to_sb0, model, variables)
+        add_constraint_to_model(sensor_to_arduino, model, variables)
+
+    #6 constraints = 12
+    for sensor in sensors1:
+        sensor_to_sb1 = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                %(signal(sensor, 'Sensor-Board1'), connected(sensor, 'Sensor-Board1'),
+                working(sensor), signal(sensor, sensor)))
+        sensor_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                  %(signal(sensor, 'Arduino'), connected('Sensor-Board1', 'Arduino'),
+                    working('Sensor-Board1'), signal(sensor, 'Sensor-Board1')))
+        add_constraint_to_model(sensor_to_sb1, model, variables)
+        add_constraint_to_model(sensor_to_arduino, model, variables)
+
+    #7 constraints = 19
+    for sensor in sensors:
+        sensor_to_rasppi = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                  %(signal(sensor, 'Rasp-Pi'), connected('Arduino', 'Rasp-Pi'),
+                    working('Arduino'), signal(sensor, 'Arduino')))
+        add_constraint_to_model(sensor_to_rasppi, model, variables)
+
+    #1 constraint = 20
+    #PROBLEM!!!!!!!!!!!!!!!!
+    # wlvl_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+    #             %(signal('Wlevel', 'Arduino'), connected('Wlevel', 'Arduino'),
+    #             working('Wlevel'), signal('Wlevel', 'Wlevel')))
+    # add_constraint_to_model(wlvl_to_arduino, model, variables)
     
-    for signal_name, from_comp, to_comp in signal_flows:
-        # to_comp can receive signal if it is connected to from_comp, from_comp is working, and from_comp has the signal
-        constraint = "IFF('%s', AND('%s', AND('%s', '%s')))" % (
-            signal(signal_name, to_comp),  # to_comp has received the signal
-            connected(from_comp, to_comp),  # from_comp is connected to to_comp
-            working(from_comp),  # from_comp is working
-            signal(signal_name, from_comp)  # from_comp has received or generated the signal
-        )
-        add_constraint_to_model(constraint, model, variables)
+    #6 constraints = 26
+    #PROBLEM!!!!!!!!!!!!!!!!
+    for actuator in actuators:
+        actuator_to_pb = ("IFF('%s', AND('%s', AND('%s', AND('%s', '%s'))))"
+                  %(signal(actuator, 'Power-Board'), connected('Power-Board', actuator),
+                    working('Power-Board'), powered('Power-Board'), 
+                    signal(actuator, 'Power-Board')))
+        actuator_to_arduino = ("IFF('%s', AND('%s', AND('%s', '%s')))"
+                  %(signal(actuator, 'Arduino'), connected('Arduino', 'Power-Board'),
+                    working('Power-Board'),
+                    signal(actuator, 'Power-Board')))
+        add_constraint_to_model(actuator_to_pb, model, variables)
+        add_constraint_to_model(actuator_to_arduino, model, variables)
     # END STUDENT CODE
+
+
     pass
 
 def create_sensor_generation_constraints(model, variables):
@@ -199,54 +221,22 @@ def create_sensor_generation_constraints(model, variables):
 
 def create_expected_result_constraints(model, variables):
     # BEGIN STUDENT CODE
-    actuators = {
-        'Fans': ['H-T0', 'H-T1'],
-        'LEDs': ['Light0', 'Light1'],
-        'Pump': ['Moisture0', 'Moisture1', 'Wlevel']
-    }
-
-    # for actuator, sensors in actuators.items():
-    #     sensor_conditions = ' OR '.join(["'%s'" % signal(sensor, 'Rasp-Pi') for sensor in sensors])
-    #     constraint = "IFF('%s', AND('%s', AND('%s', (%s))))" % (
-    #         expected_result(actuator),
-    #         powered(actuator),
-    #         working(actuator),
-    #         sensor_conditions
-    #     )
-    #     add_constraint_to_model(constraint, model, variables)
-    #     print(f"Added expected result constraint for {actuator}")
+    # Expected result for Fans
+    # Fans
+    add_constraint_to_model("IFF('%s', AND('%s', AND('%s', OR('%s', '%s'))))" % (
+        expected_result('Fans'), powered('Fans'), working('Fans'), 
+        signal('H-T0', 'Rasp-Pi'), signal('H-T1', 'Rasp-Pi')), model, variables)
+    
+    # LEDs
+    add_constraint_to_model("IFF('%s', AND('%s', AND('%s', OR('%s', '%s'))))" % (
+        expected_result('LEDs'), powered('LEDs'), working('LEDs'), 
+        signal('Light0', 'Rasp-Pi'), signal('Light1', 'Rasp-Pi')), model, variables)
+    
+    # Pump (more than two signals, so chain the OR calls)
+    add_constraint_to_model("IFF('%s', AND('%s', AND('%s', OR('%s', OR('%s', '%s')))))" % (
+        expected_result('Pump'), powered('Pump'), working('Pump'), 
+        signal('Moisture0', 'Rasp-Pi'), signal('Moisture1', 'Rasp-Pi'), signal('Wlevel', 'Rasp-Pi')), model, variables)
     # END STUDENT CODE
-    for actuator, sensors in actuators.items():
-        try:
-            # Generate the OR conditions for the sensors
-            sensor_conditions = OR(
-                signal(sensors[0], 'Rasp-Pi'),
-                signal(sensors[1], 'Rasp-Pi')
-            )
-            if len(sensors) == 3:  # Pump has three sensor signals
-                sensor_conditions = OR(sensor_conditions, signal(sensors[2], 'Rasp-Pi'))
-            
-            print(f"Creating expected result constraint for {actuator} with conditions: {sensor_conditions}")
-
-            # Build the entire constraint using AND and IFF for expected result
-            constraint = IFF(
-                expected_result(actuator),
-                AND(
-                    powered(actuator),
-                    AND(
-                        working(actuator),
-                        sensor_conditions
-                    )
-                )
-            )
-            
-            print(f"Adding constraint: {constraint}")
-            add_constraint_to_model(constraint, model, variables)
-            print(f"Added expected result constraint for {actuator}")
-        except KeyError as ke:
-            print(f"KeyError adding expected result constraint for {actuator}: {ke}")
-        except Exception as e:
-            print(f"Error adding expected result constraint for {actuator}: {e}")
     pass
 
 def create_constraints(model, variables):
@@ -254,21 +244,6 @@ def create_constraints(model, variables):
     create_signal_constraints(model, variables)
     create_sensor_generation_constraints(model, variables)
     create_expected_result_constraints(model, variables)
-    # print("Adding powered constraints...")
-    # create_powered_constraints(model, variables)
-    # print("Powered constraints added.")
-
-    # print("Adding signal constraints...")
-    # create_signal_constraints(model, variables)
-    # print("Signal constraints added.")
-
-    # print("Adding sensor generation constraints...")
-    # create_sensor_generation_constraints(model, variables)
-    # print("Sensor generation constraints added.")  # Ensure this is called
-
-    # print("Adding expected result constraints...")
-    # create_expected_result_constraints(model, variables)
-    # print("Expected result constraints added.")
 
 def create_greenhouse_model():
     model = cp_model.CpModel()
