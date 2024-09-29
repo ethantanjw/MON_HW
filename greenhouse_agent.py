@@ -1,10 +1,13 @@
 import rospy, ros_hardware, layers
 import sys, os, select, time
+import light_monitor
+import logging_monitor
 from terrabot_utils import time_since_midnight
+import camera_behavior
 
 import greenhouse_behaviors as gb
 import ping_behavior as ping
-import camera_behavior
+import email_behavior as email
 
 def init_ros(sim, name):
     if sim: rospy.set_param('use_sim_time', True)
@@ -40,18 +43,24 @@ class BehavioralGreenhouseAgent:
         # BEGIN STUDENT CODE
         self.actuators = ros_hardware.ROSActuators()
         
-        #instantiate behaviors
-        self.behaviors = [gb.Light(),
-				gb.RaiseTemp(),
-        			gb.LowerTemp(),
-        			gb.LowerHumid(),
-        			gb.RaiseSMoist(),
-        			gb.LowerSMoist(),
-        			ping.Ping(),
-                    camer_behavior.TakeImage()]
-        			
-        #instantiate BehavioralLayer w/ ROSensors, ROSActuators, list of behaviors
+        light = gb.Light()
+        raise_temp = gb.RaiseTemp()
+        lower_temp = gb.LowerTemp()
+        lower_humid = gb.LowerHumid()
+        raise_smoist = gb.RaiseSMoist()
+        lower_smoist = gb.LowerSMoist()
+        ping_behavior = ping.Ping()
+        email_behavior = email.Email()
+
+        cam_behavior = camera_behavior.TakeImage()
+
+        behaviors = [light, raise_temp, lower_temp, lower_humid, raise_smoist, lower_smoist, ping_behavior, cam_behavior, email_behavior]
+            
+        self.behaviors = behaviors
         self.behavioral = layers.BehavioralLayer(self.sensors, self.actuators, self.behaviors)
+        
+        
+        
         # END STUDENT CODE
 
     def main(self):
@@ -82,32 +91,31 @@ class LayeredGreenhouseAgent:
         # BEGIN STUDENT CODE
         self.actuators = ros_hardware.ROSActuators()
         
-        #instantiate behaviors
-        self.behaviors = [gb.Light(),
-				gb.RaiseTemp(),
-        			gb.LowerTemp(),
-        			gb.LowerHumid(),
-        			gb.RaiseSMoist(),
-        			gb.LowerSMoist(),
-        			ping.Ping(),
-                    camera_behavior.TakeImage()]
-        			
-        #instantiate BehavioralLayer w/ ROSensors, ROSActuators, list of behaviors
+        light = gb.Light()
+        raise_temp = gb.RaiseTemp()
+        lower_temp = gb.LowerTemp()
+        lower_humid = gb.LowerHumid()
+        raise_smoist = gb.RaiseSMoist()
+        lower_smoist = gb.LowerSMoist()
+        ping_behavior = ping.Ping()
+        email_behavior = email.Email()
+
+        cam_behavior = camera_behavior.TakeImage()
+
+        behaviors = [light, raise_temp, lower_temp, lower_humid, raise_smoist, lower_smoist, ping_behavior, cam_behavior, email_behavior]
+            
+        self.behaviors = behaviors
         self.behavioral = layers.BehavioralLayer(self.sensors, self.actuators, self.behaviors)
-        
-        #instatiate PlanningLayer & ExecutiveLayer
-        self.planning = layers.PlanningLayer(schedulefile)
         self.executive = layers.ExecutiveLayer()
-        
-        #set connections between layers
-        #setBehavioralLayer & setPlanningLayer for the executive
         self.executive.setBehavioralLayer(self.behavioral)
-        self.executive.setPlanningLayer(self.planning)
-        #setExecutive for planning layer
+        self.planning = layers.PlanningLayer(schedulefile)
         self.planning.setExecutive(self.executive)
-        
-        #invoke getNewSchedule
         self.planning.getNewSchedule()
+        self.executive.setPlanningLayer(self.planning)
+
+        self.executive.setMonitors(self.sensors, self.actuators.actuator_state, [light_monitor.LightMonitor(), logging_monitor.LoggingMonitor()])
+        
+        
         # END STUDENT CODE
 
     def main(self):
@@ -119,6 +127,7 @@ class LayeredGreenhouseAgent:
             self.planning.doStep(t)
             self.executive.doStep(t)
             self.behavioral.doStep()
+            
             # END STUDENT CODE
             rospy.sleep(1)
             check_for_input()
