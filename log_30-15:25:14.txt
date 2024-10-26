@@ -1,0 +1,20 @@
+30-15:25:14
+, unix_time: 1727724314.8306937, midnight_time: 55514.830729, light: 890.0, temp: 24.0, humid: 64.0, weight: 1221.4922790527344, smoist: 623.0, level: 132.92095947265625, light_raw: (861, 919), temp_raw: (24, 24), humid_raw: (80, 48), weight_raw: (459.7856140136719, 761.7066650390625), smoist_raw: (588, 658), level_raw: 132.92095947265625
+, fan: False, wpump: False, led: 200
+
+30-15:25:24
+, unix_time: 1727724324.8502722, midnight_time: 55524.850302, light: 898.0, temp: 24.0, humid: 63.0, weight: 1221.5181579589844, smoist: 622.5, level: 132.92095947265625, light_raw: (872, 924), temp_raw: (24, 24), humid_raw: (79, 47), weight_raw: (459.7374572753906, 761.7807006835938), smoist_raw: (588, 657), level_raw: 132.92095947265625
+, fan: False, wpump: False, led: 200
+
+30-15:25:34
+, unix_time: 1727724334.870093, midnight_time: 55534.870124, light: 898.0, temp: 24.0, humid: 62.5, weight: 1221.4806518554688, smoist: 623.0, level: 132.92095947265625, light_raw: (871, 925), temp_raw: (24, 24), humid_raw: (78, 47), weight_raw: (459.70733642578125, 761.7733154296875), smoist_raw: (588, 658), level_raw: 132.92095947265625
+, fan: False, wpump: False, led: 200
+
+30-15:25:44
+, unix_time: 1727724344.8902566, midnight_time: 55544.890292, light: 900.0, temp: 24.0, humid: 62.5, weight: 1221.4138793945312, smoist: 622.5, level: 132.92095947265625, light_raw: (872, 928), temp_raw: (24, 24), humid_raw: (78, 47), weight_raw: (459.66278076171875, 761.7510986328125), smoist_raw: (588, 657), level_raw: 132.92095947265625
+, fan: False, wpump: False, led: 200
+
+30-15:25:54
+, unix_time: 1727724354.9118903, midnight_time: 55554.91192, light: 896.5, temp: 24.0, humid: 62.5, weight: 1221.3607482910156, smoist: 623.0, level: 132.92095947265625, light_raw: (871, 922), temp_raw: (24, 24), humid_raw: (78, 47), weight_raw: (459.6158142089844, 761.7449340820312), smoist_raw: (588, 658), level_raw: 132.92095947265625
+, fan: False, wpump: False, led: 200
+
